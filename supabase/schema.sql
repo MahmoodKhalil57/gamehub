@@ -21,25 +21,20 @@ create index if not exists games_status_idx on public.games(status);
 -- Row-Level Security IS the backend: these policies are enforced by Postgres itself.
 alter table public.games enable row level security;
 
-drop policy if exists games_read_published on public.games;
 create policy games_read_published on public.games
   for select using (status = 'published');
 
-drop policy if exists games_read_own on public.games;
 create policy games_read_own on public.games
-  for select using (owner = auth.uid());
+  for select using (owner = (select auth.uid()));
 
-drop policy if exists games_insert_own on public.games;
 create policy games_insert_own on public.games
-  for insert with check (owner = auth.uid());
+  for insert with check (owner = (select auth.uid()));
 
-drop policy if exists games_update_own on public.games;
 create policy games_update_own on public.games
-  for update using (owner = auth.uid()) with check (owner = auth.uid());
+  for update using (owner = (select auth.uid())) with check (owner = (select auth.uid()));
 
-drop policy if exists games_delete_own on public.games;
 create policy games_delete_own on public.games
-  for delete using (owner = auth.uid());
+  for delete using (owner = (select auth.uid()));
 
 -- Count a play without exposing update rights on the whole row.
 create or replace function public.increment_play(game_slug text)
